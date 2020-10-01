@@ -1,14 +1,50 @@
 'use strict'
 
 const path = require('path');
+const glob = require('glob')
 const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsWebpackPlugin = require('optimize-css-assets-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin'); // 注意引用方式3.0以后要解构
 
+const setMPA = () => {
+  const entry = {};
+  const htmlWebpackPlugins = [];
+
+  const entryFiles = glob.sync(path.join(__dirname, './src/*/index.js'));
+  entryFiles.forEach(entryFile => {
+    const match = entryFile.match(/src\/(.*)\/index\.js/);
+    const pageName = match && match[1];
+
+    entry[pageName] = entryFile;
+    htmlWebpackPlugins.push(
+      new HtmlWebpackPlugin({ 
+        template: path.join(__dirname, `src/${pageName}/index.html`),
+        filename: `${pageName}.html`,
+        chunks: [pageName], //要包含哪些chunk
+        inject: true, //将chunks自动注入html
+        minify: {
+          html5: true,
+          collapseWhitespace: true,
+          preserveLineBreaks: false,
+          minifyCSS: true,
+          minifyJS: true,
+          removeComments: false
+        }
+      }),
+    )
+  })
+
+  return {
+    entry,
+    htmlWebpackPlugins
+  }
+}
+const { entry, htmlWebpackPlugins } =  setMPA()
+
 module.exports = {
-  entry: './src/index.js',
+  entry: entry,
   output: {
     path: path.join(__dirname, 'dist'),
     filename: '[name]_[chunkhash:8].js' // 8位文件指纹
@@ -56,19 +92,6 @@ module.exports = {
       assetNameRegExp: /.css$/g,
       cssProcessor: require('cssnano')
     }),
-    new HtmlWebpackPlugin({ // 自动生成html，可以使用template指定模版
-      filename: 'index.html',
-      chunks: ['main'], //要包含哪些chunk
-      inject: true, //将chunks自动注入html
-      minify: {
-        html5: true,
-        collapseWhitespace: true,
-        preserveLineBreaks: false,
-        minifyCSS: true,
-        minifyJS: true,
-        removeComments: false
-      }
-    }),
     new CleanWebpackPlugin(), // 打包前自动清理dist
-  ]
+  ].concat(htmlWebpackPlugins)
 }
