@@ -6,6 +6,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsWebpackPlugin = require('optimize-css-assets-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin'); // 注意引用方式3.0以后要解构
+const addAssetHtmlWebpackPlugin = require('add-asset-html-webpack-plugin')
 
 module.exports = {
   entry: './src/index.js',
@@ -18,13 +19,15 @@ module.exports = {
     rules: [
       {
         test: /.js(x)$/, //加（x），因为HtmlWebpackPlugin默认用的ejs模版引擎，jsx语法
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-            cacheDirectory: true // 编译结果缓存到node_modules/.cache/babel-loader
-          }     
-        }
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env'],
+              cacheDirectory: true // 编译结果缓存到node_modules/.cache/babel-loader
+            }     
+          }
+        ]
       },
       {
         test: /.css$/,
@@ -76,7 +79,20 @@ module.exports = {
       }
     }),
     new CleanWebpackPlugin(), // 打包前自动清理dist
+
+    // 告诉webpack使用了哪些动态链接库，不用再打包这里面的东西
+    new webpack.DllReferencePlugin({
+      manifest: require('./build/lib/manifest.json')
+    }),
+    new addAssetHtmlWebpackPlugin([
+      {
+        filepath: path.resolve(__dirname, './build/lib/*.dll.js'),
+        outputPath: 'static', // 拷贝后的输出路径，相对于html
+        publicPath: 'static' 
+      }
+    ])
   ],
+  // devtool: 'source-map',
   optimization: {
     splitChunks: {
       chunks: 'all',
