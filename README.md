@@ -1,4 +1,6 @@
 # webpack-complete-demo
-常用webpack配置
+dll配置:
 
-多页面打包通用配置在 `mpa-build` 分支
+查看 `webpack.dll.js` 和 `webpack.prod.js` 
+
+
