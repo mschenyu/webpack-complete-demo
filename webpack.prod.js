@@ -18,13 +18,21 @@ module.exports = {
     rules: [
       {
         test: /.js(x)$/, //加（x），因为HtmlWebpackPlugin默认用的ejs模版引擎，jsx语法
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-            cacheDirectory: true // 编译结果缓存到node_modules/.cache/babel-loader
-          }     
-        }
+        use: [
+          {
+            loader: 'thread-loader',
+            options: {
+              workers: 2 //开启两个进程
+            }
+          },
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env'],
+              cacheDirectory: true // 编译结果缓存到node_modules/.cache/babel-loader
+            }     
+          }
+        ]
       },
       {
         test: /.css$/,
